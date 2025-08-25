@@ -12,3 +12,8 @@ chromadb
 langchain-huggingface
 sentence-transformers
 motor
+rapidfuzz
+httpx
+langgraph
+langchain-core
+langchain-openai

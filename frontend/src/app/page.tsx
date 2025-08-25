@@ -95,7 +95,7 @@ const Home = () => {
           <motion.div
             key={index}
             variants={item}
-            className={`bg-white border border-gray-200 rounded-lg p-6 h-full flex flex-col ${index === agents.length - 1 ? 'opacity-70' : ''}`}
+            className={`bg-white border border-gray-300 shadow-lg rounded-lg p-6 h-full flex flex-col ${index === agents.length - 1 ? 'opacity-70' : ''}`}
           >
             <div className="text-3xl mb-4">
               {agent.emoji}
