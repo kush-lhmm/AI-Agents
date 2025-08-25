@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 
 load_dotenv()
 
@@ -69,7 +70,6 @@ app.include_router(search_router, prefix="/api")
 app.include_router(tata_chat_router, prefix="/api")
 app.include_router(avatar_router, prefix="/api")
 
-# util to verify webhook signatures
 def _verify_whatsapp_signature(signature_header: str | None, raw_body: bytes) -> bool:
     if not signature_header or not WA_APP_SECRET:
         return False
@@ -235,6 +235,8 @@ async def chat_poll_now():
         return {"ok": True, "summary": summary}
     except Exception as e:
         raise HTTPException(500, f"Chat poll failed: {e}")
+    
+app.mount("/", StaticFiles(directory="frontend/out", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
