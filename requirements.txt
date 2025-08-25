@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic
+openai
+python-dotenv
+python-multipart
+boto3
+email-validator
+pydantic[email]
+langchain-chroma
+chromadb
+langchain-huggingface
+sentence-transformers
+motor

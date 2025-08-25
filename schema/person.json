@@ -1,0 +1,436 @@
+{
+  "name": "person_image_analysis",
+  "schema": {
+    "$defs": {
+      "BBox": {
+        "properties": {
+          "x0": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "X0",
+            "type": "number"
+          },
+          "y0": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Y0",
+            "type": "number"
+          },
+          "x1": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "X1",
+            "type": "number"
+          },
+          "y1": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Y1",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x0",
+          "y0",
+          "x1",
+          "y1"
+        ],
+        "title": "BBox",
+        "type": "object"
+      },
+      "Environment": {
+        "properties": {
+          "setting": {
+            "enum": [
+              "indoor",
+              "outdoor",
+              "vehicle",
+              "studio",
+              "stadium",
+              "nature",
+              "street",
+              "home",
+              "office",
+              "shop",
+              "unclear"
+            ],
+            "title": "Setting",
+            "type": "string"
+          },
+          "dominant_colors": {
+            "items": {
+              "enum": [
+                "black",
+                "white",
+                "gray",
+                "red",
+                "orange",
+                "yellow",
+                "green",
+                "blue",
+                "purple",
+                "brown",
+                "pink"
+              ],
+              "type": "string"
+            },
+            "title": "Dominant Colors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "setting",
+          "dominant_colors"
+        ],
+        "title": "Environment",
+        "type": "object"
+      },
+      "Expression": {
+        "properties": {
+          "mood": {
+            "enum": [
+              "neutral",
+              "happy",
+              "surprised",
+              "angry",
+              "sad",
+              "focused",
+              "unclear"
+            ],
+            "title": "Mood",
+            "type": "string"
+          },
+          "mouth_open": {
+            "title": "Mouth Open",
+            "type": "boolean"
+          },
+          "smiling": {
+            "title": "Smiling",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mood",
+          "mouth_open",
+          "smiling"
+        ],
+        "title": "Expression",
+        "type": "object"
+      },
+      "Eyes": {
+        "properties": {
+          "color": {
+            "enum": [
+              "brown",
+              "black",
+              "blue",
+              "green",
+              "hazel",
+              "gray",
+              "unclear"
+            ],
+            "title": "Color",
+            "type": "string"
+          },
+          "eyewear": {
+            "enum": [
+              "none",
+              "glasses",
+              "sunglasses",
+              "goggles",
+              "unclear"
+            ],
+            "title": "Eyewear",
+            "type": "string"
+          }
+        },
+        "required": [
+          "color",
+          "eyewear"
+        ],
+        "title": "Eyes",
+        "type": "object"
+      },
+      "FaceAttributes": {
+        "properties": {
+          "bbox": {
+            "$ref": "#/$defs/BBox"
+          },
+          "occluded": {
+            "title": "Occluded",
+            "type": "boolean"
+          },
+          "age_bracket": {
+            "enum": [
+              "child",
+              "teen",
+              "adult",
+              "senior",
+              "unclear"
+            ],
+            "title": "Age Bracket",
+            "type": "string"
+          },
+          "hair": {
+            "$ref": "#/$defs/Hair"
+          },
+          "eyes": {
+            "$ref": "#/$defs/Eyes"
+          },
+          "facial_hair": {
+            "$ref": "#/$defs/FacialHair"
+          },
+          "headwear": {
+            "enum": [
+              "none",
+              "cap",
+              "hat",
+              "helmet",
+              "scarf",
+              "hood",
+              "religious_covering",
+              "unclear"
+            ],
+            "title": "Headwear",
+            "type": "string"
+          },
+          "expression": {
+            "$ref": "#/$defs/Expression"
+          },
+          "pose": {
+            "$ref": "#/$defs/Pose"
+          },
+          "accessories": {
+            "items": {
+              "enum": [
+                "earrings",
+                "necklace",
+                "mask",
+                "earbuds",
+                "headphones",
+                "tie",
+                "bowtie",
+                "watch",
+                "bracelet",
+                "bindi",
+                "unclear"
+              ],
+              "type": "string"
+            },
+            "title": "Accessories",
+            "type": "array"
+          }
+        },
+        "required": [
+          "bbox",
+          "occluded",
+          "age_bracket",
+          "hair",
+          "eyes",
+          "facial_hair",
+          "headwear",
+          "expression",
+          "pose",
+          "accessories"
+        ],
+        "title": "FaceAttributes",
+        "type": "object"
+      },
+      "FacialHair": {
+        "properties": {
+          "presence": {
+            "enum": [
+              "none",
+              "mustache",
+              "beard",
+              "goatee",
+              "stubble",
+              "unclear"
+            ],
+            "title": "Presence",
+            "type": "string"
+          }
+        },
+        "required": [
+          "presence"
+        ],
+        "title": "FacialHair",
+        "type": "object"
+      },
+      "Hair": {
+        "properties": {
+          "style": {
+            "enum": [
+              "straight",
+              "wavy",
+              "curly",
+              "coily",
+              "braided",
+              "bun",
+              "ponytail",
+              "buzz",
+              "bald",
+              "covered",
+              "unclear"
+            ],
+            "title": "Style",
+            "type": "string"
+          },
+          "length": {
+            "enum": [
+              "very_short",
+              "short",
+              "medium",
+              "long",
+              "very_long",
+              "unclear"
+            ],
+            "title": "Length",
+            "type": "string"
+          },
+          "color": {
+            "enum": [
+              "black",
+              "brown",
+              "blonde",
+              "red",
+              "gray",
+              "white",
+              "dyed_color",
+              "mixed",
+              "unclear"
+            ],
+            "title": "Color",
+            "type": "string"
+          }
+        },
+        "required": [
+          "style",
+          "length",
+          "color"
+        ],
+        "title": "Hair",
+        "type": "object"
+      },
+      "PeopleSummary": {
+        "properties": {
+          "has_person": {
+            "title": "Has Person",
+            "type": "boolean"
+          },
+          "num_faces": {
+            "title": "Num Faces",
+            "type": "integer"
+          },
+          "faces": {
+            "items": {
+              "$ref": "#/$defs/FaceAttributes"
+            },
+            "title": "Faces",
+            "type": "array"
+          }
+        },
+        "required": [
+          "has_person",
+          "num_faces",
+          "faces"
+        ],
+        "title": "PeopleSummary",
+        "type": "object"
+      },
+      "Pose": {
+        "properties": {
+          "view": {
+            "enum": [
+              "frontal",
+              "three_quarter",
+              "profile",
+              "back",
+              "unclear"
+            ],
+            "title": "View",
+            "type": "string"
+          },
+          "head_tilt": {
+            "enum": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "none",
+              "unclear"
+            ],
+            "title": "Head Tilt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "view",
+          "head_tilt"
+        ],
+        "title": "Pose",
+        "type": "object"
+      },
+      "Safety": {
+        "properties": {
+          "nsfw": {
+            "title": "Nsfw",
+            "type": "boolean"
+          },
+          "minors_possible": {
+            "title": "Minors Possible",
+            "type": "boolean"
+          },
+          "sensitive_context": {
+            "title": "Sensitive Context",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "nsfw",
+          "minors_possible",
+          "sensitive_context"
+        ],
+        "title": "Safety",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "caption": {
+        "title": "Caption",
+        "type": "string"
+      },
+      "people": {
+        "$ref": "#/$defs/PeopleSummary"
+      },
+      "environment": {
+        "$ref": "#/$defs/Environment"
+      },
+      "ocr_text": {
+        "title": "Ocr Text",
+        "type": "string"
+      },
+      "suggested_actions": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Suggested Actions",
+        "type": "array"
+      },
+      "safety": {
+        "$ref": "#/$defs/Safety"
+      }
+    },
+    "required": [
+      "caption",
+      "people",
+      "environment",
+      "ocr_text",
+      "suggested_actions",
+      "safety"
+    ],
+    "title": "PersonImageAnalysis",
+    "type": "object"
+  },
+  "strict": true
+}
