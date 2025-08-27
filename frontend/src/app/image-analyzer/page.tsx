@@ -301,15 +301,17 @@ export default function ImageAnalyzer() {
             } transition-colors`}
           >
             {isAnalyzing ? (
-              <span className="flex items-center justify-center gap-2">
-                <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="inline-block">
-                  🔄
-                </motion.span>
-                Analyzing...
-              </span>
-            ) : (
-              "Analyze Image"
-            )}
+  <span className="flex items-center justify-center gap-2">
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+      className="h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"
+    />
+    Analyzing...
+  </span>
+) : (
+  "Analyze Image"
+)}
           </motion.button>
 
           <AnimatePresence>

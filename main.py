@@ -1,8 +1,12 @@
 import os
+import sys
+import signal
+import subprocess
 import urllib.parse
 from pathlib import Path
 from typing import Optional
 from contextlib import asynccontextmanager
+
 import httpx
 from dotenv import load_dotenv
 import hmac, hashlib
@@ -13,8 +17,46 @@ from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
-from utils.gmail_chat_agent import chat_agent
 from utils.ingest import ingest
+
+_EMAIL_AGENT_PROC = None
+
+def _start_email_agent():
+    global _EMAIL_AGENT_PROC
+    if _EMAIL_AGENT_PROC and _EMAIL_AGENT_PROC.poll() is None:
+        return
+    agent_path = Path(__file__).parent / "api" / "email_pdf_agent.py"
+    if not agent_path.exists():
+        raise RuntimeError(f"email_pdf_agent.py not found at {agent_path}")
+    env = os.environ.copy()
+    env.setdefault(
+        "GMAIL_CHAT_QUERY",
+        'in:inbox is:unread has:attachment filename:pdf -from:me newer_than:7d '
+        '-category:{promotions social} -label:"Agent/Processing" -label:"Agent/PDFDone" -label:"Agent/Chatted"'
+    )
+    _EMAIL_AGENT_PROC = subprocess.Popen(
+        [sys.executable, str(agent_path)],
+        cwd=str(Path(__file__).parent),
+        env=env
+    )
+
+def _stop_email_agent():
+    global _EMAIL_AGENT_PROC
+    if not _EMAIL_AGENT_PROC:
+        return
+    if _EMAIL_AGENT_PROC.poll() is None:
+        try:
+            if os.name == "nt":
+                _EMAIL_AGENT_PROC.terminate()
+            else:
+                _EMAIL_AGENT_PROC.send_signal(signal.SIGTERM)
+            _EMAIL_AGENT_PROC.wait(timeout=8)
+        except Exception:
+            try:
+                _EMAIL_AGENT_PROC.kill()
+            except Exception:
+                pass
+    _EMAIL_AGENT_PROC = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,14 +64,11 @@ async def lifespan(app: FastAPI):
     missing = [k for k in required if not os.environ.get(k)]
     if missing:
         raise RuntimeError(f"Missing required env vars for agent: {', '.join(missing)}")
-    chat_agent.start()
+    _start_email_agent()
     try:
         yield
     finally:
-        try:
-            await chat_agent.stop()
-        except Exception:
-            pass
+        _stop_email_agent()
 
 app = FastAPI(lifespan=lifespan)
 
@@ -61,6 +100,7 @@ from api.document_mailer import router as mail_router
 from api.tata_search import router as search_router
 from api.tata_chat import router as tata_chat_router
 from api.avatar import router as avatar_router
+from api.rag import router as rag_router
 
 app.include_router(chat_router, prefix="/api")
 app.include_router(image_router, prefix="/api")
@@ -68,11 +108,11 @@ app.include_router(mail_router, prefix="/api")
 app.include_router(search_router, prefix="/api")
 app.include_router(tata_chat_router, prefix="/api")
 app.include_router(avatar_router, prefix="/api")
+app.include_router(rag_router, prefix="/api/rag" )
 
 def _verify_whatsapp_signature(signature_header: str | None, raw_body: bytes) -> bool:
     if not signature_header or not WA_APP_SECRET:
         return False
- 
     try:
         algo, hexdigest = signature_header.split("=", 1)
         if algo != "sha256":
@@ -80,7 +120,6 @@ def _verify_whatsapp_signature(signature_header: str | None, raw_body: bytes) ->
     except ValueError:
         return False
     expected = hmac.new(WA_APP_SECRET.encode(), raw_body, hashlib.sha256).hexdigest()
-
     return hmac.compare_digest(hexdigest, expected)
 
 @app.get("/webhook")
@@ -88,7 +127,6 @@ async def verify_webhook(request: Request):
     mode = request.query_params.get("hub.mode")
     token = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
-
     print(f"🔍 Mode: {mode}, Token: {token}, Challenge: {challenge}")
     if mode == "subscribe" and token == WA_VERIFY_TOKEN:
         return PlainTextResponse(content=challenge, status_code=200)
@@ -105,20 +143,15 @@ async def whatsapp_receive(request: Request):
         raise HTTPException(status_code=401, detail="Bad signature")
 
     data = await request.json()
-
     try:
         changes = data["entry"][0]["changes"][0]["value"]
-
-        # Ignore delivery/read callbacks cleanly
         if "statuses" in changes:
             return {"ok": True}
 
         msgs = changes.get("messages", [])
         for m in msgs:
-            sender = m.get("from")  # E.164 like "91XXXXXXXXXX"
+            sender = m.get("from")
             mtype = m.get("type")
-
-            # Normalize inbound text across message types
             text = None
             if mtype == "text":
                 text = (m.get("text") or {}).get("body", "").strip()
@@ -129,27 +162,19 @@ async def whatsapp_receive(request: Request):
                 elif inter.get("type") == "list_reply":
                     text = inter["list_reply"]["title"]
             elif mtype == "image":
-                # Optional: acknowledge; you can fetch media later via Graph API
                 text = "[image received]"
-
             if not (sender and text):
                 continue
-
-            # Call your Tata agent and send the reply
             try:
                 bot_reply = await tata_reply(text)
             except Exception as e:
                 print(f"[AGENT] tata_reply error: {e}")
                 bot_reply = "Sorry, I'm having trouble answering that right now."
-
             await wa_client.send_text(sender, bot_reply)
-
         return {"ok": True}
     except Exception as e:
-        # Never 5xx the webhook; log and return ok so Meta doesn't retry forever
         print(f"[WA] Webhook parse error: {e}")
         return {"ok": True, "note": "ignored non-message update"}
-
 
 @app.post("/admin/reindex")
 def reindex():
@@ -227,14 +252,6 @@ async def google_oauth_callback(code: Optional[str] = None, error: Optional[str]
         "<p>After saving the refresh token, remove this page/route.</p>"
     )
 
-@app.post("/api/chat-agent/poll-now")
-async def chat_poll_now():
-    try:
-        summary = await chat_agent.poll_once()
-        return {"ok": True, "summary": summary}
-    except Exception as e:
-        raise HTTPException(500, f"Chat poll failed: {e}")
-    
 app.mount("/", StaticFiles(directory="frontend/out", html=True), name="static")
 
 if __name__ == "__main__":

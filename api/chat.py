@@ -20,7 +20,6 @@ client = OpenAI(api_key=api_key)
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-nano")
 
 # --- Load system prompt JSON once at import ---
-# /api/chat.py  -> project root assumed to be parent of "api"  -> /prompts/nutrition_system.json
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PROMPT_PATH = PROJECT_ROOT / "prompts" / "nutrition_system.json"
 
@@ -38,18 +37,18 @@ if not isinstance(_prompt_json, dict) or "system" not in _prompt_json or not isi
     raise RuntimeError(f"{PROMPT_PATH} must contain a string field 'system'")
 
 _SYSTEM_TEMPLATE = _prompt_json["system"]
-# The template can use {brand} and {today}, e.g. "You are {brand}'s nutrition bot. Today is {today}."
+# The template can use {today}, e.g. "Today is {today}."
 
-def render_system_text(*, brand: str, today_str: str) -> str:
+def render_system_text(*, today_str: str) -> str:
     """
     Fast, safe formatter. If a placeholder is missing in the template, str.format will raise a KeyError.
     We trap and rethrow a clear error so you know to fix the JSON.
     """
     try:
-        return _SYSTEM_TEMPLATE.format(brand=brand, today=today_str)
+        return _SYSTEM_TEMPLATE.format(today=today_str)
     except KeyError as e:
         raise RuntimeError(f"Missing placeholder in system template: {e}. "
-                           f"Ensure your JSON uses {{brand}} and/or {{today}} as needed.")
+                           f"Ensure your JSON uses {{today}} as needed.")
 
 # --- Request models ---
 class ChatIn(BaseModel):
@@ -60,7 +59,6 @@ class ChatIn(BaseModel):
 @router.post("/chat")
 def chat(body: ChatIn):
     system_text = render_system_text(
-        brand="Diffrun",
         today_str=date.today().isoformat(),
     )
 

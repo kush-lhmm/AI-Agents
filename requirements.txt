@@ -17,3 +17,8 @@ httpx
 langgraph
 langchain-core
 langchain-openai
+PyPDF2
+chromadb
+rank-bm25
+numpy
+langchain-text-splitters

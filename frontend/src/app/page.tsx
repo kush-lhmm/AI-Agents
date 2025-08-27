@@ -5,13 +5,13 @@ import { motion } from 'framer-motion';
 
 const Home = () => {
   const agents = [
-    {
-      emoji: '🖌️',
-      title: 'Avatar Creator',
-      description: 'Design and customize your personal avatar with various styles',
-      href: '/avatar-creator',
-      buttonText: 'Create Avatar →'
-    },
+    // {
+    //   emoji: '🖌️',
+    //   title: 'Avatar Creator',
+    //   description: 'Design and customize your personal avatar with various styles',
+    //   href: '/avatar-creator',
+    //   buttonText: 'Create Avatar →'
+    // },
     {
       emoji: '📦',
       title: 'Tata Sampann Product Assistant',
@@ -39,6 +39,13 @@ const Home = () => {
       description: 'Request documents and get them delivered to your email',
       href: '/document-mailer',
       buttonText: 'Request Documents →'
+    },
+    {
+      "emoji": "📄",
+      "title": "RAG Document Assistant",
+      "description": "Upload a PDF and ask questions about its content",
+      "href": "/rag",
+      "buttonText": "Ask about your PDF"
     },
     {
       emoji: '✨',
