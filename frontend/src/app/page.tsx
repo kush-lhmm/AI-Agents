@@ -80,7 +80,7 @@ const Home = () => {
         className="text-center mb-12"
       >
         <h1 className="text-3xl md:text-4xl font-bold mb-4 text-black">
-          GEN AI Agents
+          GenAIssance
         </h1>
         <motion.p
           initial={{ opacity: 0 }}
