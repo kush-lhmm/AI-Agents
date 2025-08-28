@@ -101,7 +101,13 @@ from api.tata_search import router as search_router
 from api.tata_chat import router as tata_chat_router
 from api.avatar import router as avatar_router
 from api.rag import router as rag_router
+from api.qr import router as qr_router
+from api.brand_classifier import router as brand_router
+from api.vision_combo import router as vision_router
 
+app.include_router(vision_router, prefix="/api")
+app.include_router(brand_router, prefix="/api")
+app.include_router(qr_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(image_router, prefix="/api")
 app.include_router(mail_router, prefix="/api")

@@ -4,57 +4,71 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 const Home = () => {
-  const agents = [
-    // {
-    //   emoji: '🖌️',
-    //   title: 'Avatar Creator',
-    //   description: 'Design and customize your personal avatar with various styles',
-    //   href: '/avatar-creator',
-    //   buttonText: 'Create Avatar →'
-    // },
-    {
-      emoji: '📦',
-      title: 'Tata Sampann Product Assistant',
-      description: 'Get product details and recommendations',
-      href: '/tata-sampann',
-      buttonText: 'Explore Products →'
-    },
-    {
-      emoji: '🍎',
-      title: 'Nutrition Bot',
-      description: 'Get personalized food advice and meal plans',
-      href: '/nutrition-bot',
-      buttonText: 'Get Nutrition Tips →'
-    },
-    {
-      emoji: '🖼️',
-      title: 'Image Analyzer',
-      description: 'Upload images and get AI-powered insights',
-      href: '/image-analyzer',
-      buttonText: 'Analyze Images →'
-    },
-    {
-      emoji: '📧',
-      title: 'Document Mailer',
-      description: 'Request documents and get them delivered to your email',
-      href: '/document-mailer',
-      buttonText: 'Request Documents →'
-    },
-    {
-      "emoji": "📄",
-      "title": "RAG Document Assistant",
-      "description": "Upload a PDF and ask questions about its content",
-      "href": "/rag",
-      "buttonText": "Ask about your PDF"
-    },
-    {
-      emoji: '✨',
-      title: 'More Coming Soon',
-      description: 'Additional AI agents in development',
-      href: '#',
-      buttonText: 'Coming soon'
-    }
-  ];
+const agents = [
+  {
+    emoji: '📦',
+    title: 'Tata Sampann Product Assistant',
+    description: 'Get product details and recommendations',
+    href: '/tata-sampann',
+    buttonText: 'Explore Products →'
+  },
+  {
+    emoji: '🍎',
+    title: 'Nutrition Bot',
+    description: 'Get personalized food advice and meal plans',
+    href: '/nutrition-bot',
+    buttonText: 'Get Nutrition Tips →'
+  },
+  {
+    emoji: '🖼️',
+    title: 'Image Analyzer',
+    description: 'Upload images and get AI-powered insights',
+    href: '/image-analyzer',
+    buttonText: 'Analyze Images →'
+  },
+  {
+    emoji: '📧',
+    title: 'Document Mailer',
+    description: 'Request documents and get them delivered to your email',
+    href: '/document-mailer',
+    buttonText: 'Request Documents →'
+  },
+  {
+    emoji: "📄",
+    title: "RAG Document Assistant",
+    description: "Upload a PDF and ask questions about its content",
+    href: "/rag",
+    buttonText: "Ask about your PDF"
+  },
+  {
+    emoji: '🔍',
+    title: 'QR Code Detector',
+    description: 'Upload an image to detect and decode QR codes',
+    href: '/qr-detector',
+    buttonText: 'Scan QR Code →'
+  },
+  {
+    emoji: '🏷️',
+    title: 'Brand Checker',
+    description: 'Upload an image to identify cigarette brands',
+    href: '/brand-check',
+    buttonText: 'Check Brand →'
+  },
+  {
+    emoji: '👁️',
+    title: 'Vision Test',
+    description: 'Test computer vision capabilities with various image analysis tasks',
+    href: '/vision-test',
+    buttonText: 'Test Vision →'
+  },
+  {
+    emoji: '✨',
+    title: 'More Coming Soon...',
+    description: 'Additional AI agents in development',
+    href: '#',
+    buttonText: 'Coming soon...'
+  }
+];
 
   const container = {
     hidden: { opacity: 0 },
