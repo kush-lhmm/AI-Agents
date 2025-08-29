@@ -3,28 +3,21 @@ import httpx
 
 BACKEND_BASE = os.getenv("BACKEND_BASE", "http://127.0.0.1:8000")
 
-async def vision_reply(user_text: str) -> str:
+async def vision_analyze_file(content: bytes, content_type: str) -> dict:
     """
-    Call your Vision Combo endpoint and return a plain-text reply.
-
-    Expected response fields (flexible): 'reply' | 'answer' | 'result' | 'message'.
+    Send image bytes to /api/vision/analyze (multipart) and return JSON:
+    { "qr": bool, "brand": "marlboro|classic|goldflake|i don't know" }
     """
-    payload = {"message": user_text}
+    files = {"image": ("photo", content, content_type or "application/octet-stream")}
     async with httpx.AsyncClient(timeout=60) as client:
-        r = await client.post(f"{BACKEND_BASE}/api/vision/analyze", json=payload)
+        r = await client.post(f"{BACKEND_BASE}/api/vision/analyze", files=files)
         r.raise_for_status()
-        data = r.json()
+        return r.json()
 
-    reply = (
-        (data.get("reply")
-         or data.get("answer")
-         or data.get("result")
-         or data.get("message")
-         or "")
-        .strip()
-    )
-    return reply or "Sorry, I couldn't generate a response."
+# Optional: keep a text fallback so old imports don't break
+async def vision_reply(user_text: str) -> str:
+    return "Send a clear storefront photo to analyze QR presence and brand."
 
-# Optional: keep tata_reply as a pass-through to avoid breaking other imports elsewhere
+# Optional: keep tata_reply as alias
 async def tata_reply(user_text: str) -> str:
     return await vision_reply(user_text)

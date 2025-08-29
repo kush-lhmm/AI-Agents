@@ -139,7 +139,33 @@ async def verify_webhook(request: Request):
     return PlainTextResponse("Verification failed", status_code=403)
 
 from utils.wa import wa_client
-from utils.agent_bridge import vision_reply
+from utils.agent_bridge import vision_analyze_file
+
+# Use your long-lived WhatsApp access token to fetch media
+WA_TOKEN = os.getenv("WA_TOKEN", "")
+
+async def _download_whatsapp_media(media_id: str) -> tuple[bytes, str]:
+    """
+    Download media bytes from WhatsApp Graph API.
+    Returns: (content_bytes, content_type)
+    """
+    if not WA_TOKEN:
+        raise RuntimeError("WA_TOKEN missing in environment")
+
+    headers = {"Authorization": f"Bearer {WA_TOKEN}"}
+    async with httpx.AsyncClient(timeout=30) as client:
+        # 1) Resolve the media URL
+        meta = await client.get(f"https://graph.facebook.com/v21.0/{media_id}", headers=headers)
+        meta.raise_for_status()
+        url = meta.json().get("url")
+        if not url:
+            raise RuntimeError("No media URL returned by Graph API")
+
+        # 2) Download the binary
+        binr = await client.get(url, headers=headers)
+        binr.raise_for_status()
+        content_type = binr.headers.get("Content-Type", "application/octet-stream")
+        return binr.content, content_type
 
 @app.post("/webhook")
 async def whatsapp_receive(request: Request):
@@ -158,7 +184,29 @@ async def whatsapp_receive(request: Request):
         for m in msgs:
             sender = m.get("from")
             mtype = m.get("type")
-            text = None
+            if not sender:
+                continue
+
+            # --- Image flow: fetch bytes -> vision analyze ---
+            if mtype == "image":
+                media = m.get("image") or {}
+                media_id = media.get("id")
+                if not media_id:
+                    await wa_client.send_text(sender, "No image id found. Please resend the photo.")
+                    continue
+                try:
+                    content, content_type = await _download_whatsapp_media(media_id)
+                    result = await vision_analyze_file(content, content_type)
+                    qr = result.get("qr")
+                    brand = result.get("brand")
+                    bot_reply = f"QR detected: {'Yes' if qr else 'No'}\nBrand: {brand or 'i don’t know'}"
+                except Exception as e:
+                    print(f"[AGENT] vision_analyze_file error: {e}")
+                    bot_reply = "Unable to analyze the image. Please try a clearer storefront photo."
+                await wa_client.send_text(sender, bot_reply)
+                continue
+
+            # --- Non-image: guide user to send a photo ---
             if mtype == "text":
                 text = (m.get("text") or {}).get("body", "").strip()
             elif mtype == "interactive":
@@ -167,20 +215,21 @@ async def whatsapp_receive(request: Request):
                     text = inter["button_reply"]["title"]
                 elif inter.get("type") == "list_reply":
                     text = inter["list_reply"]["title"]
-            elif mtype == "image":
-                text = "[image received]"
-            if not (sender and text):
-                continue
-            try:
-                bot_reply = await vision_reply(text)
-            except Exception as e:
-                print(f"[AGENT] tata_reply error: {e}")
-                bot_reply = "Sorry, I'm having trouble answering that right now."
-            await wa_client.send_text(sender, bot_reply)
+                else:
+                    text = ""
+            else:
+                text = ""
+
+            if text:
+                await wa_client.send_text(sender, "Please send a clear storefront photo to analyze QR presence and brand.")
+            else:
+                await wa_client.send_text(sender, "Send a storefront photo to analyze QR presence and brand.")
+
         return {"ok": True}
     except Exception as e:
         print(f"[WA] Webhook parse error: {e}")
         return {"ok": True, "note": "ignored non-message update"}
+  
 
 @app.post("/admin/reindex")
 def reindex():
