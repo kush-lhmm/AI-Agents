@@ -139,7 +139,7 @@ async def verify_webhook(request: Request):
     return PlainTextResponse("Verification failed", status_code=403)
 
 from utils.wa import wa_client
-from utils.agent_bridge import tata_reply
+from utils.agent_bridge import vision_reply
 
 @app.post("/webhook")
 async def whatsapp_receive(request: Request):
@@ -172,7 +172,7 @@ async def whatsapp_receive(request: Request):
             if not (sender and text):
                 continue
             try:
-                bot_reply = await tata_reply(text)
+                bot_reply = await vision_reply(text)
             except Exception as e:
                 print(f"[AGENT] tata_reply error: {e}")
                 bot_reply = "Sorry, I'm having trouble answering that right now."

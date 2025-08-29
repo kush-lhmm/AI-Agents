@@ -3,12 +3,28 @@ import httpx
 
 BACKEND_BASE = os.getenv("BACKEND_BASE", "http://127.0.0.1:8000")
 
-async def tata_reply(user_text: str) -> str:
-    """Call your Tata chat endpoint and return the reply string."""
-    payload = {"message": user_text}  # /api/tata/chat only needs 'message'
-    async with httpx.AsyncClient(timeout=30) as client:
-        r = await client.post(f"{BACKEND_BASE}/api/tata/chat", json=payload)
+async def vision_reply(user_text: str) -> str:
+    """
+    Call your Vision Combo endpoint and return a plain-text reply.
+
+    Expected response fields (flexible): 'reply' | 'answer' | 'result' | 'message'.
+    """
+    payload = {"message": user_text}
+    async with httpx.AsyncClient(timeout=60) as client:
+        r = await client.post(f"{BACKEND_BASE}/api/vision/combo", json=payload)
         r.raise_for_status()
         data = r.json()
-        # ChatOut has 'reply', 'used_results', 'meta'
-        return (data.get("reply") or "").strip() or "Sorry, I don't have enough information."
+
+    reply = (
+        (data.get("reply")
+         or data.get("answer")
+         or data.get("result")
+         or data.get("message")
+         or "")
+        .strip()
+    )
+    return reply or "Sorry, I couldn't generate a response."
+
+# Optional: keep tata_reply as a pass-through to avoid breaking other imports elsewhere
+async def tata_reply(user_text: str) -> str:
+    return await vision_reply(user_text)
