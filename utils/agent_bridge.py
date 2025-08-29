@@ -11,7 +11,7 @@ async def vision_reply(user_text: str) -> str:
     """
     payload = {"message": user_text}
     async with httpx.AsyncClient(timeout=60) as client:
-        r = await client.post(f"{BACKEND_BASE}/api/vision/combo", json=payload)
+        r = await client.post(f"{BACKEND_BASE}/api/vision/analyze", json=payload)
         r.raise_for_status()
         data = r.json()
 
